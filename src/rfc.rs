@@ -2,7 +2,7 @@ use regex::Regex;
 use serde::Deserialize;
 use zed_extension_api::{
     self as zed, http_client::HttpMethod, http_client::HttpRequest, http_client::RedirectPolicy,
-    serde_json, SlashCommand, SlashCommandOutput, Worktree,
+    serde_json, Range, SlashCommand, SlashCommandOutput, SlashCommandOutputSection, Worktree,
 };
 
 const RFC_BASE_URL: &str = "https://www.ietf.org/rfc";
@@ -72,14 +72,18 @@ impl zed::Extension for SlashCommandRfcExtension {
             }
         };
         let clean_regex = Regex::new(r"\n.+\[Page \d+\][\n\u{c}]+(RFC \d+.+\d{4}\n\n)?").unwrap();
-        let clean_text = clean_regex.replace_all(&rfc_text, "");
-        let clean_text = Regex::new("\n\n\n+")
-            .unwrap()
-            .replace_all(&clean_text, "\n\n");
-        return Ok(zed::SlashCommandOutput {
-            text: format!("{}\n{}", rfc, clean_text),
-            sections: vec![],
-        });
+        let newline_regex = Regex::new("\n\n\n+").unwrap();
+        let no_footy = clean_regex.replace_all(&rfc_text, "");
+        let clean_text = newline_regex.replace_all(&no_footy, "\n\n");
+        let text = clean_text.to_string();
+        let sections = vec![SlashCommandOutputSection {
+            range: Range {
+                start: 0,
+                end: text.len() as u32,
+            },
+            label: rfc.to_string(),
+        }];
+        Ok(SlashCommandOutput { text, sections })
     }
 }
 
