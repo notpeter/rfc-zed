@@ -1,9 +1,9 @@
 id = "rfc"
-name = "Slash RFC"
-description = "An example extension showcasing slash commands."
+name = "RFC: Request for Comments"
+description = "Slash command for IETF RFCs: /rfc NNNN"
 version = "0.1.0"
 schema_version = 1
-authors = ["Zed Industries <hi@zed.dev>"]
+authors = ["Peter Tripp <notpeter@notpeter.net>"]
 repository = "https://github.com/zed-industries/zed"
 
 [slash_commands.rfc]
