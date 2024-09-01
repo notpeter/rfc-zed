@@ -1,10 +1,13 @@
-use zed_extension_api::{self as zed, SlashCommand, SlashCommandOutput, Worktree};
+use zed::{SlashCommand, SlashCommandOutput, Worktree};
+use zed_extension_api as zed;
 
-struct SlashCommandsExampleExtension;
+const RFC_BASE_URL: &str = "https://www.ietf.org/rfc/rfc";
 
-impl zed::Extension for SlashCommandsExampleExtension {
+struct SlashCommandRfcExtension;
+
+impl zed::Extension for SlashCommandRfcExtension {
     fn new() -> Self {
-        SlashCommandsExampleExtension
+        SlashCommandRfcExtension
     }
 
     fn complete_slash_command_argument(
@@ -26,20 +29,22 @@ impl zed::Extension for SlashCommandsExampleExtension {
     ) -> Result<SlashCommandOutput, String> {
         if command.name != "rfc" {
             return Err("Invalid command. Expected 'rfc'.".into());
-        }
-        if args.is_empty() {
+        } else if args.is_empty() {
             return Err("need rfc number".to_string());
         }
-        if let Ok(rfc_number) = args[0].parse::<u32>() {
-            let rfc_zero = format!("{:04}", rfc_number);
-            Ok(zed::SlashCommandOutput {
-                text: format!("RFC {rfc_number} https://www.ietf.org/rfc/rfc{rfc_zero}.json"),
-                sections: vec![],
-            })
-        } else {
-            Err("invalid rfc number".to_string())
-        }
+        let Ok(rfc_number) = args[0].parse::<u32>() else {
+            return Err("invalid rfc number".to_string());
+        };
+
+        let rfc_zero = format!("{:04}", rfc_number);
+        let json_url = format!("{RFC_BASE_URL}/rfc{rfc_zero}.json");
+        let text_url = format!("{RFC_BASE_URL}/rfc{rfc_zero}.txt");
+
+        Ok(zed::SlashCommandOutput {
+            text: format!("RFC {rfc_number} {text_url}"),
+            sections: vec![],
+        })
     }
 }
 
-zed::register_extension!(SlashCommandsExampleExtension);
+zed::register_extension!(SlashCommandRfcExtension);
