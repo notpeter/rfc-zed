@@ -1,3 +1,4 @@
+use regex::Regex;
 use serde::Deserialize;
 use zed_extension_api::{
     self as zed, http_client::HttpMethod, http_client::HttpRequest, http_client::RedirectPolicy,
@@ -70,8 +71,13 @@ impl zed::Extension for SlashCommandRfcExtension {
                 return Err(format!("Error: {}", e));
             }
         };
+        let clean_regex = Regex::new(r"\n.+\[Page \d+\][\n\u{c}]+(RFC \d+.+\d{4}\n\n)?").unwrap();
+        let clean_text = clean_regex.replace_all(&rfc_text, "");
+        let clean_text = Regex::new("\n\n\n+")
+            .unwrap()
+            .replace_all(&clean_text, "\n\n");
         return Ok(zed::SlashCommandOutput {
-            text: format!("{}\n{}", rfc, rfc_text),
+            text: format!("{}\n{}", rfc, clean_text),
             sections: vec![],
         });
     }
