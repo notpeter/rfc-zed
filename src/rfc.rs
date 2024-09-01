@@ -1,7 +1,10 @@
-use zed::{SlashCommand, SlashCommandOutput, Worktree};
-use zed_extension_api as zed;
+use serde::Deserialize;
+use zed_extension_api::{
+    self as zed, http_client::HttpMethod, http_client::HttpRequest, http_client::RedirectPolicy,
+    serde_json, SlashCommand, SlashCommandOutput, Worktree,
+};
 
-const RFC_BASE_URL: &str = "https://www.ietf.org/rfc/rfc";
+const RFC_BASE_URL: &str = "https://www.ietf.org/rfc";
 
 struct SlashCommandRfcExtension;
 
@@ -39,11 +42,61 @@ impl zed::Extension for SlashCommandRfcExtension {
         let rfc_zero = format!("{:04}", rfc_number);
         let json_url = format!("{RFC_BASE_URL}/rfc{rfc_zero}.json");
         let text_url = format!("{RFC_BASE_URL}/rfc{rfc_zero}.txt");
+        // Prepare the request
+        let json_request = HttpRequest {
+            method: HttpMethod::Get,
+            url: json_url,
+            headers: vec![],
+            body: None,
+            redirect_policy: RedirectPolicy::FollowAll,
+        };
+        let text_request = HttpRequest {
+            method: HttpMethod::Get,
+            url: text_url,
+            headers: vec![],
+            body: None,
+            redirect_policy: RedirectPolicy::FollowAll,
+        };
+        let rfc: Rfc = match zed::http_client::fetch(&json_request) {
+            Ok(response) => serde_json::from_slice(&response.body).unwrap(),
+            Err(e) => {
+                return Err(format!("Error: {}", e));
+            }
+        };
 
-        Ok(zed::SlashCommandOutput {
-            text: format!("RFC {rfc_number} {text_url}"),
+        let rfc_text = match zed::http_client::fetch(&text_request) {
+            Ok(response) => String::from_utf8(response.body).unwrap(),
+            Err(e) => {
+                return Err(format!("Error: {}", e));
+            }
+        };
+        return Ok(zed::SlashCommandOutput {
+            text: format!("{}\n{}", rfc, rfc_text),
             sections: vec![],
-        })
+        });
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct Rfc {
+    doc_id: String,
+    #[serde(deserialize_with = "deserialize_trimmed_string")]
+    title: String,
+    pub_date: String,
+    // doi: String,
+}
+
+fn deserialize_trimmed_string<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    Ok(s.trim().to_string())
+}
+
+impl std::fmt::Display for Rfc {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {} ({})", self.doc_id, self.title, self.pub_date)
     }
 }
 
