@@ -1,3 +1,5 @@
+mod ietf;
+
 use zed_extension_api::{
     self as zed, SlashCommand, SlashCommandArgumentCompletion, SlashCommandOutput,
     SlashCommandOutputSection, Worktree,
@@ -16,6 +18,11 @@ impl zed::Extension for SlashCommandsExampleExtension {
         _args: Vec<String>,
     ) -> Result<Vec<zed_extension_api::SlashCommandArgumentCompletion>, String> {
         match command.name.as_str() {
+            "rfc" => Ok(vec![SlashCommandArgumentCompletion {
+                label: "RFC 1234".to_string(),
+                new_text: "rfc-1234".to_string(),
+                run_command: true,
+            }]),
             "echo" => Ok(vec![]),
             "pick-one" => Ok(vec![
                 SlashCommandArgumentCompletion {

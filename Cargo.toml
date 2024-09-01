@@ -9,8 +9,14 @@ license = "Apache-2.0"
 #workspace = true
 
 [lib]
-path = "src/slash_commands_example.rs"
+path = "src/rfc.rs"
 crate-type = ["cdylib"]
 
+[[bin]]
+name = "rfc"
+path = "src/main.rs"
+
 [dependencies]
+serde = "1.0.209"
+serde_json = "1.0.127"
 zed_extension_api = "0.1.0"
