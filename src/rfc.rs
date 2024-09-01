@@ -1,9 +1,4 @@
-mod ietf;
-
-use zed_extension_api::{
-    self as zed, SlashCommand, SlashCommandArgumentCompletion, SlashCommandOutput,
-    SlashCommandOutputSection, Worktree,
-};
+use zed_extension_api::{self as zed, SlashCommand, SlashCommandOutput, Worktree};
 
 struct SlashCommandsExampleExtension;
 
@@ -18,29 +13,7 @@ impl zed::Extension for SlashCommandsExampleExtension {
         _args: Vec<String>,
     ) -> Result<Vec<zed_extension_api::SlashCommandArgumentCompletion>, String> {
         match command.name.as_str() {
-            "rfc" => Ok(vec![SlashCommandArgumentCompletion {
-                label: "RFC 1234".to_string(),
-                new_text: "rfc-1234".to_string(),
-                run_command: true,
-            }]),
-            "echo" => Ok(vec![]),
-            "pick-one" => Ok(vec![
-                SlashCommandArgumentCompletion {
-                    label: "Option One".to_string(),
-                    new_text: "option-1".to_string(),
-                    run_command: true,
-                },
-                SlashCommandArgumentCompletion {
-                    label: "Option Two".to_string(),
-                    new_text: "option-2".to_string(),
-                    run_command: true,
-                },
-                SlashCommandArgumentCompletion {
-                    label: "Option Three".to_string(),
-                    new_text: "option-3".to_string(),
-                    run_command: true,
-                },
-            ]),
+            "rfc" => Ok(vec![]),
             command => Err(format!("unknown slash command: \"{command}\"")),
         }
     }
@@ -51,45 +24,20 @@ impl zed::Extension for SlashCommandsExampleExtension {
         args: Vec<String>,
         _worktree: Option<&Worktree>,
     ) -> Result<SlashCommandOutput, String> {
-        match command.name.as_str() {
-            "echo" => {
-                if args.is_empty() {
-                    return Err("nothing to echo".to_string());
-                }
-
-                let text = args.join(" ");
-
-                Ok(SlashCommandOutput {
-                    sections: vec![SlashCommandOutputSection {
-                        range: (0..text.len()).into(),
-                        label: "Echo".to_string(),
-                    }],
-                    text,
-                })
-            }
-            "pick-one" => {
-                let Some(selection) = args.first() else {
-                    return Err("no option selected".to_string());
-                };
-
-                match selection.as_str() {
-                    "option-1" | "option-2" | "option-3" => {}
-                    invalid_option => {
-                        return Err(format!("{invalid_option} is not a valid option"));
-                    }
-                }
-
-                let text = format!("You chose {selection}.");
-
-                Ok(SlashCommandOutput {
-                    sections: vec![SlashCommandOutputSection {
-                        range: (0..text.len()).into(),
-                        label: format!("Pick One: {selection}"),
-                    }],
-                    text,
-                })
-            }
-            command => Err(format!("unknown slash command: \"{command}\"")),
+        if command.name != "rfc" {
+            return Err("Invalid command. Expected 'rfc'.".into());
+        }
+        if args.is_empty() {
+            return Err("need rfc number".to_string());
+        }
+        if let Ok(rfc_number) = args[0].parse::<u32>() {
+            let rfc_zero = format!("{:04}", rfc_number);
+            Ok(zed::SlashCommandOutput {
+                text: format!("RFC {rfc_number} https://www.ietf.org/rfc/rfc{rfc_zero}.json"),
+                sections: vec![],
+            })
+        } else {
+            Err("invalid rfc number".to_string())
         }
     }
 }

@@ -9,11 +9,3 @@ repository = "https://github.com/zed-industries/zed"
 [slash_commands.rfc]
 description = "Inserts the text of RFC"
 requires_argument = true
-
-[slash_commands.echo]
-description = "echoes the provided input"
-requires_argument = true
-
-[slash_commands.pick-one]
-description = "pick one of three options"
-requires_argument = true
